@@ -7,7 +7,7 @@ using namespace std;
 
 class BigInt {
 private:
-	list<unsigned long> bits = { 0 };
+	list<unsigned long> bits = {};
 	bool isNeg = false;
 	void condense();
 
@@ -19,10 +19,13 @@ public:
 	bool getIsNeg();
 
 	string toHex() const;
+	BigInt();
 	BigInt(int integer);
 	BigInt(unsigned int integer);
 	BigInt(long integer);
 	BigInt(unsigned long integer);
+	BigInt(long long integer);
+	BigInt(unsigned long long integer);
 
 	BigInt operator~ ();
 	friend BigInt operator& (BigInt rhs, BigInt lhs);
@@ -40,6 +43,10 @@ public:
 	BigInt operator-();
 	friend BigInt operator+ (BigInt rhs, BigInt lhs);
 	friend BigInt operator- (BigInt rhs, BigInt lhs);
+	friend BigInt operator* (BigInt rhs, BigInt lhs);
+	friend BigInt operator/ (BigInt rhs, BigInt lhs);
+	friend BigInt operator% (BigInt rhs, BigInt lhs);
+	BigInt Log();
 
 	BigInt& operator&= (BigInt lhs);
 	BigInt& operator|= (BigInt lhs);
@@ -48,10 +55,13 @@ public:
 	BigInt& operator>>= (BigInt lhs);
 	BigInt& operator+= (BigInt lhs);
 	BigInt& operator-= (BigInt lhs);
+	BigInt& operator*= (BigInt lhs);
 
-	friend bool operator>= (BigInt rhs, BigInt lhs);
-	friend bool operator<= (BigInt rhs, BigInt lhs);
-	friend bool operator> (BigInt rhs, BigInt lhs);
+	friend bool operator== (BigInt rhs, BigInt lhs);
+	friend bool operator!= (BigInt rhs, BigInt lhs);
 	friend bool operator< (BigInt rhs, BigInt lhs);
+	friend bool operator> (BigInt rhs, BigInt lhs);
+	friend bool operator<= (BigInt rhs, BigInt lhs);
+	friend bool operator>= (BigInt rhs, BigInt lhs);
 
 };

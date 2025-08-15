@@ -20,8 +20,7 @@ using namespace std;
 void BigInt::condense() {
 	unsigned long test = isNeg ? MAX : 0ul;
 	size_t size = bits.size();
-	// remove implied elements, but keep atleast 1 element
-	while (bits.back() == test && size > 1) {
+	while (!bits.empty() && bits.back() == test) {
 		bits.pop_back();
 		size--;
 	}
@@ -61,16 +60,19 @@ string BigInt::toHex() const {
 			s = digits[*i >> 4 * j & 0x0f] + s;
 		}
 	}
+	if (s == "") {
+		s = "0";
+	}
 	return (negative ? "-0x" : "0x") + s;
 }
 
 #pragma region Constructors
 
+BigInt::BigInt() {
+}
+
 BigInt::BigInt(int integer) {
-	if (integer < 0) {
-		isNeg = true;
-		integer = *(unsigned int*)&integer;
-	}
+	isNeg = integer < 0;
 	bits = { (unsigned long)integer };
 }
 
@@ -80,16 +82,28 @@ BigInt::BigInt(unsigned int integer) {
 }
 
 BigInt::BigInt(long integer) {
-	if (integer < 0) {
-		isNeg = true;
-		integer = *(unsigned long*)&integer;
-	}
+	isNeg = integer < 0;
 	bits = { (unsigned long)integer };
 }
 
 BigInt::BigInt(unsigned long integer) {
 	isNeg = false;
 	bits = { integer };
+}
+
+BigInt::BigInt(long long integer) {
+	isNeg = integer < 0;
+	unsigned long long temp = integer;
+
+	for (; temp != 0; temp >>= BITS_IN_ULONG) {
+		bits.push_back(temp & MAX);
+	}
+}
+
+BigInt::BigInt(unsigned long long integer) {
+	for (; integer != 0; integer >>= BITS_IN_ULONG) {
+		bits.push_back(integer & MAX);
+	}
 }
 
 #pragma endregion
@@ -110,8 +124,8 @@ BigInt operator&(BigInt rhs, BigInt lhs) {
 	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
 	list<unsigned long>::iterator lhsIt = lhs.bits.begin();
 
-	BigInt temp = 0;
-	
+	BigInt temp;
+
 	while (rhsIt != rhs.bits.end() && lhsIt != lhs.bits.end()) {
 		temp.bits.push_back(*rhsIt & *lhsIt);
 		++rhsIt;
@@ -137,7 +151,7 @@ BigInt operator|(BigInt rhs, BigInt lhs) {
 	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
 	list<unsigned long>::iterator lhsIt = lhs.bits.begin();
 
-	BigInt temp = 0;
+	BigInt temp;
 
 	while (rhsIt != rhs.bits.end() && lhsIt != lhs.bits.end()) {
 		temp.bits.push_back(*rhsIt | *lhsIt);
@@ -167,18 +181,16 @@ BigInt operator^(BigInt rhs, BigInt lhs) {
 	unsigned long rhsC = *rhsIt;
 	unsigned long lhsC = *lhsIt;
 
-	BigInt temp = 0ul;
+	BigInt temp;
 
-	while (true) {
-		int state = (rhsIt == rhs.bits.end() ? 0 : 1) | (lhsIt == lhs.bits.end() ? 0 : 2);
-		if (state == 0) {
-			break;
-		}
+	int state = 0;
+	while (state = (rhsIt == rhs.bits.end() ? 0 : 1) | (lhsIt == lhs.bits.end() ? 0 : 2), state != 0) {
+		rhsC = ((state & 1) != 0) ? *(rhsIt++) : rhs.isNeg ? MAX : 0;
+		lhsC = ((state & 2) != 0) ? *(lhsIt++) : lhs.isNeg ? MAX : 0;
 		temp.bits.push_back(rhsC ^ lhsC);
-		rhsC = ((state & 1) != 0) ? *(++rhsIt) : rhs.isNeg ? MAX : 0;
-		lhsC = ((state & 2) != 0) ? *(++lhsIt) : lhs.isNeg ? MAX : 0;
 	}
 	temp.isNeg = rhs.isNeg != lhs.isNeg;
+	temp.condense();
 	return temp;
 }
 
@@ -247,9 +259,8 @@ BigInt operator>>(BigInt rhs, BigInt lhs) {
 BigInt& BigInt::operator++() {
 	list<unsigned long>::iterator it = bits.begin();
 	// -1 case
-	if (isNeg && bits.size() == 1 && bits.front() == MAX) {
+	if (isNeg && bits.empty()) {
 		isNeg = false;
-		bits.assign({ 0 });
 		return *this;
 	}
 
@@ -266,7 +277,9 @@ BigInt& BigInt::operator++() {
 	if (carry) {
 		bits.push_back(1ul);
 	}
-	//this->condense();
+	if (isNeg) {
+		this->condense();
+	}
 	return *this;
 }
 
@@ -311,7 +324,7 @@ BigInt operator+(BigInt rhs, BigInt lhs) {
 	unsigned long rhsC = 0;
 	unsigned long lhsC = 0;
 
-	BigInt temp = 0;
+	BigInt temp;
 	bool carryN = false;
 	bool carryP = false;
 	unsigned long i = 0;
@@ -379,8 +392,54 @@ BigInt operator+(BigInt rhs, BigInt lhs) {
 	return temp;
 }
 
+// binary subtraction
 BigInt operator-(BigInt rhs, BigInt lhs) {
 	return rhs + -lhs;
+}
+
+BigInt operator*(BigInt rhs, BigInt lhs) {
+	bool negate = rhs.isNeg != lhs.isNeg;
+	if (rhs.isNeg) {
+		rhs = -rhs;
+	}
+	if (lhs.isNeg) {
+		lhs = -lhs;
+	}
+
+	BigInt temp = 0ul;
+
+	for (BigInt mask = 1ul; mask <= lhs; mask <<= 1ul) {
+		if ((mask & lhs) == mask) {
+			temp += rhs;
+		}
+		rhs <<= 1ul;
+	}
+
+	if (negate) {
+		temp = -temp;
+	}
+
+	return temp;
+}
+
+
+BigInt BigInt::Log() {
+	if (*this <= 0ul) {
+		return 0ul;
+	}
+	BigInt l = 0;
+	list<unsigned long>::iterator it = this->bits.begin();
+	++it;
+	for (; it != this->bits.end(); ++it) {
+		l += BITS_IN_ULONG;
+	}
+	--it;
+	unsigned long mask = 1ul;
+	for (unsigned long i = 0; i < BITS_IN_ULONG && mask <= *it; ++i, mask <<= 1) {
+		++l;
+	}
+
+	return l;
 }
 
 #pragma endregion
@@ -429,27 +488,59 @@ BigInt& BigInt::operator-=(BigInt lhs) {
 	return *this;
 }
 
+// multiplication assignment
+BigInt& BigInt::operator*=(BigInt lhs) {
+	*this = *this * lhs;
+	return *this;
+}
+
 #pragma endregion
 
 #pragma region Comparisons
 
+// Equality
+bool operator==(BigInt rhs, BigInt lhs) {
+	// if rhs == lhs, then rhs ^ lhs == 0
+	rhs ^= lhs;
+	if (rhs.isNeg) {
+		return false;
+	}
+	list<unsigned long>::iterator it = rhs.bits.begin();
+	if (*it != 0) {
+		return false;
+	}
+	// condense() makes 0 one element long
+	++it;
+	return it == rhs.bits.end();
+}
+
+// Inequality
+bool operator!=(BigInt rhs, BigInt lhs) {
+	return !(lhs == rhs);
+}
+
+// Less than
 bool operator< (BigInt rhs, BigInt lhs) {
+	// a non-negative number is never less than a negative number
 	if (!rhs.isNeg && lhs.isNeg) {
 		return false;
 	}
 	return (rhs - lhs).isNeg;
 }
 
+// Greater than
 bool operator>(BigInt rhs, BigInt lhs) {
 	return lhs < rhs;
 }
 
-bool operator>=(BigInt rhs, BigInt lhs) {
-	return !(rhs < lhs);
-}
-
+// Less than or equal to
 bool operator<=(BigInt rhs, BigInt lhs) {
 	return !(lhs < rhs);
+}
+
+// Greater than or equal to
+bool operator>=(BigInt rhs, BigInt lhs) {
+	return !(rhs < lhs);
 }
 
 #pragma endregion
