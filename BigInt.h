@@ -41,6 +41,11 @@ public:
 	friend BigInt operator+ (BigInt rhs, BigInt lhs);
 	friend BigInt operator- (BigInt rhs, BigInt lhs);
 
+	BigInt& operator&= (BigInt lhs);
+	BigInt& operator|= (BigInt lhs);
+	BigInt& operator^= (BigInt lhs);
+	BigInt& operator<<= (BigInt lhs);
+	BigInt& operator>>= (BigInt lhs);
 	BigInt& operator+= (BigInt lhs);
 	BigInt& operator-= (BigInt lhs);
 

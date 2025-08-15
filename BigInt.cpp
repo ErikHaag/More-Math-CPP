@@ -110,26 +110,24 @@ BigInt operator&(BigInt rhs, BigInt lhs) {
 	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
 	list<unsigned long>::iterator lhsIt = lhs.bits.begin();
 
-	list<unsigned long> b = {};
-
+	BigInt temp = 0;
+	
 	while (rhsIt != rhs.bits.end() && lhsIt != lhs.bits.end()) {
-		b.push_back(*rhsIt & *lhsIt);
+		temp.bits.push_back(*rhsIt & *lhsIt);
 		++rhsIt;
 		++lhsIt;
 	}
 	if (rhs.isNeg && rhsIt == rhs.bits.end()) {
 		while (lhsIt != lhs.bits.end()) {
-			b.push_back(*lhsIt);
+			temp.bits.push_back(*lhsIt);
 			++lhsIt;
 		}
 	} else if (lhs.isNeg && lhsIt == lhs.bits.end()) {
 		while (rhsIt != rhs.bits.end()) {
-			b.push_back(*rhsIt);
+			temp.bits.push_back(*rhsIt);
 			++rhsIt;
 		}
 	}
-	BigInt temp = 0;
-	temp.bits = b;
 	temp.isNeg = lhs.isNeg && rhs.isNeg;
 	return temp;
 }
@@ -139,26 +137,24 @@ BigInt operator|(BigInt rhs, BigInt lhs) {
 	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
 	list<unsigned long>::iterator lhsIt = lhs.bits.begin();
 
-	list<unsigned long> b = {};
+	BigInt temp = 0;
 
 	while (rhsIt != rhs.bits.end() && lhsIt != lhs.bits.end()) {
-		b.push_back(*rhsIt | *lhsIt);
+		temp.bits.push_back(*rhsIt | *lhsIt);
 		++rhsIt;
 		++lhsIt;
 	}
 	if (!rhs.isNeg && rhsIt == rhs.bits.end()) {
 		while (lhsIt != lhs.bits.end()) {
-			b.push_back(*lhsIt);
+			temp.bits.push_back(*lhsIt);
 			++lhsIt;
 		}
 	} else if (!lhs.isNeg && lhsIt == lhs.bits.end()) {
 		while (rhsIt != rhs.bits.end()) {
-			b.push_back(*rhsIt);
+			temp.bits.push_back(*rhsIt);
 			++rhsIt;
 		}
 	}
-	BigInt temp = 0;
-	temp.bits = b;
 	temp.isNeg = lhs.isNeg || rhs.isNeg;
 	return temp;
 }
@@ -171,19 +167,17 @@ BigInt operator^(BigInt rhs, BigInt lhs) {
 	unsigned long rhsC = *rhsIt;
 	unsigned long lhsC = *lhsIt;
 
-	list<unsigned long> b = {};
+	BigInt temp = 0ul;
 
 	while (true) {
 		int state = (rhsIt == rhs.bits.end() ? 0 : 1) | (lhsIt == lhs.bits.end() ? 0 : 2);
 		if (state == 0) {
 			break;
 		}
-		b.push_back(rhsC ^ lhsC);
+		temp.bits.push_back(rhsC ^ lhsC);
 		rhsC = ((state & 1) != 0) ? *(++rhsIt) : rhs.isNeg ? MAX : 0;
 		lhsC = ((state & 2) != 0) ? *(++lhsIt) : lhs.isNeg ? MAX : 0;
 	}
-	BigInt temp = 0ul;
-	temp.bits = b;
 	temp.isNeg = rhs.isNeg != lhs.isNeg;
 	return temp;
 }
@@ -241,6 +235,7 @@ BigInt operator>>(BigInt rhs, BigInt lhs) {
 			}
 		}
 	}
+	rhs.condense();
 	return rhs;
 }
 
@@ -316,7 +311,7 @@ BigInt operator+(BigInt rhs, BigInt lhs) {
 	unsigned long rhsC = 0;
 	unsigned long lhsC = 0;
 
-	list<unsigned long> b = {};
+	BigInt temp = 0;
 	bool carryN = false;
 	bool carryP = false;
 	unsigned long i = 0;
@@ -356,38 +351,30 @@ BigInt operator+(BigInt rhs, BigInt lhs) {
 				++sum;
 			}
 		}
-
-		b.push_back(sum);
+		temp.bits.push_back(sum);
 	}
 
 	state = (carryN ? 1 : 0) | (rhs.isNeg ? 2 : 0) | (lhs.isNeg ? 4 : 0);
 
-	//throw state;
-
-	bool negative = false;
-
 	switch (state) {
 		case 1:
-			b.push_back(1ul);
+			temp.bits.push_back(1ul);
 			break;
 		case 2:
 		case 4:
 		case 7:
-			negative = true;
+			temp.isNeg = true;
 			break;
 		case 3:
 		case 5:
 			break;
 		case 6:
-			b.push_back(ALL_BUT_LSB);
-			negative = true;
+			temp.bits.push_back(ALL_BUT_LSB);
+			temp.isNeg = true;
 			break;
 		default:
 			break;
 	}
-	BigInt temp = 0;
-	temp.bits = b;
-	temp.isNeg = negative;
 	temp.condense();
 	return temp;
 }
@@ -396,17 +383,47 @@ BigInt operator-(BigInt rhs, BigInt lhs) {
 	return rhs + -lhs;
 }
 
-
-
 #pragma endregion
 
 #pragma region Assignment operators
 
+// bitwise and assignment
+BigInt& BigInt::operator&=(BigInt lhs) {
+	*this = *this & lhs;
+	return *this;
+}
+
+// bitwise or assignment
+BigInt& BigInt::operator|=(BigInt lhs) {
+	*this = *this | lhs;
+	return *this;
+}
+
+// bitwise xor assignment
+BigInt& BigInt::operator^=(BigInt lhs) {
+	*this = *this ^ lhs;
+	return *this;
+}
+
+// left bitshift assignment
+BigInt& BigInt::operator<<=(BigInt lhs) {
+	*this = *this << lhs;
+	return *this;
+}
+
+// right bitshift assignment
+BigInt& BigInt::operator>>=(BigInt lhs) {
+	*this = *this >> lhs;
+	return *this;
+}
+
+// addition assignment
 BigInt& BigInt::operator+=(BigInt lhs) {
 	*this = *this + lhs;
 	return *this;
 }
 
+// subtraction assignment
 BigInt& BigInt::operator-=(BigInt lhs) {
 	*this = *this - lhs;
 	return *this;
