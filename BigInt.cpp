@@ -74,21 +74,25 @@ BigInt::BigInt() {
 BigInt::BigInt(int integer) {
 	isNeg = integer < 0;
 	bits = { (unsigned long)integer };
+	this->condense();
 }
 
 BigInt::BigInt(unsigned int integer) {
 	isNeg = false;
 	bits = { (unsigned long)integer };
+	this->condense();
 }
 
 BigInt::BigInt(long integer) {
 	isNeg = integer < 0;
 	bits = { (unsigned long)integer };
+	this->condense();
 }
 
 BigInt::BigInt(unsigned long integer) {
 	isNeg = false;
 	bits = { integer };
+	this->condense();
 }
 
 BigInt::BigInt(long long integer) {
@@ -98,12 +102,14 @@ BigInt::BigInt(long long integer) {
 	for (; temp != 0; temp >>= BITS_IN_ULONG) {
 		bits.push_back(temp & MAX);
 	}
+	this->condense();
 }
 
 BigInt::BigInt(unsigned long long integer) {
 	for (; integer != 0; integer >>= BITS_IN_ULONG) {
 		bits.push_back(integer & MAX);
 	}
+	this->condense();
 }
 
 #pragma endregion
@@ -178,8 +184,8 @@ BigInt operator^(BigInt rhs, BigInt lhs) {
 	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
 	list<unsigned long>::iterator lhsIt = lhs.bits.begin();
 
-	unsigned long rhsC = *rhsIt;
-	unsigned long lhsC = *lhsIt;
+	unsigned long rhsC = 0ul;
+	unsigned long lhsC = 0ul;
 
 	BigInt temp;
 
@@ -194,7 +200,7 @@ BigInt operator^(BigInt rhs, BigInt lhs) {
 	return temp;
 }
 
-// leftshift
+// bitshift left
 BigInt operator<<(BigInt rhs, BigInt lhs) {
 	if (lhs.isNeg) {
 		return 0ul;
@@ -223,6 +229,7 @@ BigInt operator<<(BigInt rhs, BigInt lhs) {
 	return rhs;
 }
 
+// bitshift right
 BigInt operator>>(BigInt rhs, BigInt lhs) {
 	if (lhs.isNeg) {
 		return 0ul;
@@ -290,7 +297,7 @@ BigInt BigInt::operator++(int dummy) {
 	return temp;
 }
 
-
+// prefix decrement
 BigInt& BigInt::operator--() {
 	*this = ~*this;
 	++*this;
@@ -298,6 +305,7 @@ BigInt& BigInt::operator--() {
 	return *this;
 }
 
+// postfix decrement
 BigInt BigInt::operator--(int dummy) {
 	BigInt temp = *this;
 	--*this;
@@ -308,7 +316,7 @@ BigInt BigInt::operator--(int dummy) {
 
 #pragma region Arithmetic operators
 
-// unary negation
+// negation
 BigInt BigInt::operator-() {
 	BigInt temp = *this;
 	temp = ~temp;
@@ -316,7 +324,7 @@ BigInt BigInt::operator-() {
 	return temp;
 }
 
-// binary addition
+// addition
 BigInt operator+(BigInt rhs, BigInt lhs) {
 	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
 	list<unsigned long>::iterator lhsIt = lhs.bits.begin();
@@ -392,11 +400,12 @@ BigInt operator+(BigInt rhs, BigInt lhs) {
 	return temp;
 }
 
-// binary subtraction
+// subtraction
 BigInt operator-(BigInt rhs, BigInt lhs) {
 	return rhs + -lhs;
 }
 
+// multiplication
 BigInt operator*(BigInt rhs, BigInt lhs) {
 	bool negate = rhs.isNeg != lhs.isNeg;
 	if (rhs.isNeg) {
@@ -416,16 +425,82 @@ BigInt operator*(BigInt rhs, BigInt lhs) {
 	}
 
 	if (negate) {
-		temp = -temp;
+		return -temp;
 	}
-
 	return temp;
 }
 
+// division
+BigInt operator/(BigInt rhs, BigInt lhs) {
+	if (lhs == 0) {
+		throw exception("Division by zero!");
+	}
+	bool negate = rhs.isNeg != lhs.isNeg;
+	if (rhs.isNeg) {
+		rhs = -rhs;
+	}
+	if (lhs.isNeg) {
+		lhs = -lhs;
+	}
 
-BigInt BigInt::Log() {
-	if (*this <= 0ul) {
+	BigInt quotient;
+	BigInt i = rhs.log() - lhs.log();
+	BigInt subend = lhs << i;
+	BigInt mask = 1ul << i;
+	while (i >= 0 && rhs >= lhs) {
+		if (rhs >= subend) {
+			rhs -= subend;
+			quotient |= mask;
+		}
+		mask >>= 1ul;
+		subend >>= 1ul;
+		--i;
+	}
+	if (negate) {
+		return -quotient;
+	}
+	return quotient;
+}
+
+// modulus
+BigInt operator%(BigInt rhs, BigInt lhs) {
+	bool rhsNeg = rhs.isNeg;
+	bool lhsNeg = lhs.isNeg;
+	if (rhs.isNeg) {
+		rhs = -rhs;
+	}
+	if (lhs.isNeg) {
+		lhs = -lhs;
+	}
+	if (rhs == 0ul || lhs <= 1ul) {
 		return 0ul;
+	}
+	BigInt i = rhs.log() - lhs.log();
+	BigInt subend = lhs << i;
+	while (i >= 0ul && rhs >= lhs) {
+		if (rhs >= subend) {
+			rhs -= subend;
+		}
+		subend >>= 1ul;
+		--i;
+	}
+	if (rhs != 0) {
+		if (rhsNeg) {
+			// Can we please make the modulus operator always return a positive number when the divisor is positive,
+			// I've never wanted (-1) % 5 == -1
+			rhs = lhs - rhs;
+		}
+		if (lhsNeg) {
+			rhs -= lhs;
+		}
+	}
+	return rhs;
+}
+
+// floored base 2 logarithm
+BigInt BigInt::log() {
+	if (*this <= 0ul) {
+		return -1l;
 	}
 	BigInt l = 0;
 	list<unsigned long>::iterator it = this->bits.begin();
@@ -438,7 +513,7 @@ BigInt BigInt::Log() {
 	for (unsigned long i = 0; i < BITS_IN_ULONG && mask <= *it; ++i, mask <<= 1) {
 		++l;
 	}
-
+	--l;
 	return l;
 }
 
@@ -494,6 +569,18 @@ BigInt& BigInt::operator*=(BigInt lhs) {
 	return *this;
 }
 
+// division assignment
+BigInt& BigInt::operator/=(BigInt lhs) {
+	*this = *this / lhs;
+	return *this;
+}
+
+// modulus assignment
+BigInt& BigInt::operator%=(BigInt lhs) {
+	*this = *this % lhs;
+	return *this;
+}
+
 #pragma endregion
 
 #pragma region Comparisons
@@ -506,11 +593,7 @@ bool operator==(BigInt rhs, BigInt lhs) {
 		return false;
 	}
 	list<unsigned long>::iterator it = rhs.bits.begin();
-	if (*it != 0) {
-		return false;
-	}
-	// condense() makes 0 one element long
-	++it;
+	// condense() makes "0" zero elements long
 	return it == rhs.bits.end();
 }
 

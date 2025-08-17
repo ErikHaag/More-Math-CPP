@@ -46,7 +46,7 @@ public:
 	friend BigInt operator* (BigInt rhs, BigInt lhs);
 	friend BigInt operator/ (BigInt rhs, BigInt lhs);
 	friend BigInt operator% (BigInt rhs, BigInt lhs);
-	BigInt Log();
+	BigInt log();
 
 	BigInt& operator&= (BigInt lhs);
 	BigInt& operator|= (BigInt lhs);
@@ -56,6 +56,8 @@ public:
 	BigInt& operator+= (BigInt lhs);
 	BigInt& operator-= (BigInt lhs);
 	BigInt& operator*= (BigInt lhs);
+	BigInt& operator/= (BigInt lhs);
+	BigInt& operator%= (BigInt lhs);
 
 	friend bool operator== (BigInt rhs, BigInt lhs);
 	friend bool operator!= (BigInt rhs, BigInt lhs);
