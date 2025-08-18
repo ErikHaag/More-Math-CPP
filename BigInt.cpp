@@ -1,19 +1,18 @@
+// todo: make custom list type to save memory
 #include "BigInt.h"
-#include <climits>
 #include <list>
 #include <string>
 
-const unsigned long MAX = ULONG_MAX;
+const unsigned long MAX = ~0ul;
 const unsigned long ALL_BUT_MSB = MAX >> 1;
 const unsigned long MSB = ~ALL_BUT_MSB;
 const unsigned long LSB = 1;
 const unsigned long ALL_BUT_LSB = ~LSB;
 
+const unsigned long BYTES_IN_ULLONG = (unsigned long)sizeof(unsigned long long);
 const unsigned long BYTES_IN_ULONG = (unsigned long)sizeof(unsigned long);
 const unsigned long NYBBLES_IN_ULONG = BYTES_IN_ULONG << 1ul;
 const unsigned long BITS_IN_ULONG = BYTES_IN_ULONG << 3ul;
-
-
 
 using namespace std;
 
@@ -46,6 +45,39 @@ bool BigInt::getIsNeg() {
 
 #pragma endregion
 
+#pragma region Conversions
+
+int BigInt::toInt() {
+	if (bits.empty()) {
+		return isNeg ? -1 : 0;
+	}
+	const int maxInt = ~0u >> 1u;
+	return (bits.front() & maxInt) | (isNeg ? ~maxInt : 0);
+}
+
+unsigned int BigInt::toUint() {
+	if (bits.empty()) {
+		return isNeg ? -1 : 0;
+	}
+	return bits.front();
+}
+
+long BigInt::toLong() {
+	if (bits.empty()) {
+		return isNeg ? -1 : 0;
+	}
+	return (bits.front() & ALL_BUT_MSB) | (isNeg ? MSB : 0);
+}
+
+unsigned long BigInt::toUlong() {
+	if (bits.empty()) {
+		return isNeg ? -1 : 0;
+	}
+	return bits.front();
+}
+
+#pragma endregion
+
 string BigInt::toHex() const {
 	const char digits[17] = "0123456789ABCDEF";
 	BigInt temp = *this;
@@ -64,6 +96,30 @@ string BigInt::toHex() const {
 		s = "0";
 	}
 	return (negative ? "-0x" : "0x") + s;
+}
+
+string BigInt::toString(int base) const {
+	if (!(base >= 2 && base <= 36)) {
+		throw exception("Base is outside the range [2,36]");
+	}
+	if (*this == 0) {
+		return "0";
+	}
+	BigInt bBase = base;
+	const char digits[37] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	BigInt temp = *this;
+	bool negative = false;
+	if (temp.isNeg) {
+		negative = true;
+		temp = -temp;
+	}
+	string s = "";
+	while (temp > 0ul) {
+		unsigned int remainder = (temp % bBase).toUint();
+		s = digits[remainder] + s;
+		temp /= bBase;
+	}
+	return s;
 }
 
 #pragma region Constructors

@@ -18,7 +18,14 @@ public:
 	void setIsNeg(bool n);
 	bool getIsNeg();
 
+	int toInt();
+	unsigned int toUint();
+	long toLong();
+	unsigned long toUlong();
+
 	string toHex() const;
+	string toString(int base = 10) const;
+
 	BigInt();
 	BigInt(int integer);
 	BigInt(unsigned int integer);
