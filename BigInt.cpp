@@ -119,6 +119,9 @@ string BigInt::toString(int base) const {
 		s = digits[remainder] + s;
 		temp /= bBase;
 	}
+	if (negative) {
+		s = "-" + s;
+	}
 	return s;
 }
 
@@ -182,94 +185,94 @@ BigInt BigInt::operator~() {
 	return temp;
 }
 // bitwise and
-BigInt operator&(BigInt rhs, BigInt lhs) {
-	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
+BigInt operator&(BigInt lhs, BigInt rhs) {
 	list<unsigned long>::iterator lhsIt = lhs.bits.begin();
+	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
 
 	BigInt temp;
 
-	while (rhsIt != rhs.bits.end() && lhsIt != lhs.bits.end()) {
-		temp.bits.push_back(*rhsIt & *lhsIt);
-		++rhsIt;
+	while (lhsIt != lhs.bits.end() && rhsIt != rhs.bits.end()) {
+		temp.bits.push_back(*lhsIt & *rhsIt);
 		++lhsIt;
+		++rhsIt;
 	}
-	if (rhs.isNeg && rhsIt == rhs.bits.end()) {
-		while (lhsIt != lhs.bits.end()) {
-			temp.bits.push_back(*lhsIt);
-			++lhsIt;
-		}
-	} else if (lhs.isNeg && lhsIt == lhs.bits.end()) {
+	if (lhs.isNeg && lhsIt == lhs.bits.end()) {
 		while (rhsIt != rhs.bits.end()) {
 			temp.bits.push_back(*rhsIt);
 			++rhsIt;
 		}
+	} else if (rhs.isNeg && rhsIt == rhs.bits.end()) {
+		while (lhsIt != lhs.bits.end()) {
+			temp.bits.push_back(*lhsIt);
+			++lhsIt;
+		}
 	}
-	temp.isNeg = lhs.isNeg && rhs.isNeg;
+	temp.isNeg = rhs.isNeg && lhs.isNeg;
 	return temp;
 }
 
 // bitwise or
-BigInt operator|(BigInt rhs, BigInt lhs) {
-	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
+BigInt operator|(BigInt lhs, BigInt rhs) {
 	list<unsigned long>::iterator lhsIt = lhs.bits.begin();
+	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
 
 	BigInt temp;
 
-	while (rhsIt != rhs.bits.end() && lhsIt != lhs.bits.end()) {
-		temp.bits.push_back(*rhsIt | *lhsIt);
-		++rhsIt;
+	while (lhsIt != lhs.bits.end() && rhsIt != rhs.bits.end()) {
+		temp.bits.push_back(*lhsIt | *rhsIt);
 		++lhsIt;
+		++rhsIt;
 	}
-	if (!rhs.isNeg && rhsIt == rhs.bits.end()) {
-		while (lhsIt != lhs.bits.end()) {
-			temp.bits.push_back(*lhsIt);
-			++lhsIt;
-		}
-	} else if (!lhs.isNeg && lhsIt == lhs.bits.end()) {
+	if (!lhs.isNeg && lhsIt == lhs.bits.end()) {
 		while (rhsIt != rhs.bits.end()) {
 			temp.bits.push_back(*rhsIt);
 			++rhsIt;
 		}
+	} else if (!rhs.isNeg && rhsIt == rhs.bits.end()) {
+		while (lhsIt != lhs.bits.end()) {
+			temp.bits.push_back(*lhsIt);
+			++lhsIt;
+		}
 	}
-	temp.isNeg = lhs.isNeg || rhs.isNeg;
+	temp.isNeg = rhs.isNeg || lhs.isNeg;
 	return temp;
 }
 
 // bitwise xor
-BigInt operator^(BigInt rhs, BigInt lhs) {
-	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
+BigInt operator^(BigInt lhs, BigInt rhs) {
 	list<unsigned long>::iterator lhsIt = lhs.bits.begin();
+	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
 
-	unsigned long rhsC = 0ul;
 	unsigned long lhsC = 0ul;
+	unsigned long rhsC = 0ul;
 
 	BigInt temp;
 
 	int state = 0;
-	while (state = (rhsIt == rhs.bits.end() ? 0 : 1) | (lhsIt == lhs.bits.end() ? 0 : 2), state != 0) {
-		rhsC = ((state & 1) != 0) ? *(rhsIt++) : rhs.isNeg ? MAX : 0;
-		lhsC = ((state & 2) != 0) ? *(lhsIt++) : lhs.isNeg ? MAX : 0;
-		temp.bits.push_back(rhsC ^ lhsC);
+	while (state = (lhsIt == lhs.bits.end() ? 0 : 1) | (rhsIt == rhs.bits.end() ? 0 : 2), state != 0) {
+		lhsC = ((state & 1) != 0) ? *(lhsIt++) : lhs.isNeg ? MAX : 0;
+		rhsC = ((state & 2) != 0) ? *(rhsIt++) : rhs.isNeg ? MAX : 0;
+		temp.bits.push_back(lhsC ^ rhsC);
 	}
-	temp.isNeg = rhs.isNeg != lhs.isNeg;
+	temp.isNeg = lhs.isNeg != rhs.isNeg;
 	temp.condense();
 	return temp;
 }
 
 // bitshift left
-BigInt operator<<(BigInt rhs, BigInt lhs) {
-	if (lhs.isNeg) {
+BigInt operator<<(BigInt lhs, BigInt rhs) {
+	if (rhs.isNeg) {
 		return 0ul;
 	}
 
-	for (; lhs >= BITS_IN_ULONG; lhs -= BITS_IN_ULONG) {
-		rhs.bits.push_front(0ul);
+	for (; rhs >= BITS_IN_ULONG; rhs -= BITS_IN_ULONG) {
+		lhs.bits.push_front(0ul);
 	}
 
-	for (; lhs > 0; --lhs) {
+	for (; rhs > 0; --rhs) {
 		bool carryP = false;
 		bool carryN = false;
-		for (list<unsigned long>::iterator it = rhs.bits.begin(); it != rhs.bits.end(); ++it) {
+		for (list<unsigned long>::iterator it = lhs.bits.begin(); it != lhs.bits.end(); ++it) {
 			carryP = carryN;
 			carryN = (*it & MSB) == MSB;
 			*it = (*it & ALL_BUT_MSB) << 1ul;
@@ -278,40 +281,40 @@ BigInt operator<<(BigInt rhs, BigInt lhs) {
 			}
 		}
 
-		if (carryN != rhs.isNeg) {
-			rhs.bits.push_back(rhs.isNeg ? ALL_BUT_MSB : 1ul);
+		if (carryN != lhs.isNeg) {
+			lhs.bits.push_back(lhs.isNeg ? ALL_BUT_MSB : 1ul);
 		}
 	}
-	return rhs;
+	return lhs;
 }
 
 // bitshift right
-BigInt operator>>(BigInt rhs, BigInt lhs) {
-	if (lhs.isNeg) {
+BigInt operator>>(BigInt lhs, BigInt rhs) {
+	if (rhs.isNeg) {
 		return 0ul;
 	}
 
-	for (; lhs >= BITS_IN_ULONG; lhs -= BITS_IN_ULONG) {
-		rhs.bits.pop_front();
+	for (; rhs >= BITS_IN_ULONG; rhs -= BITS_IN_ULONG) {
+		lhs.bits.pop_front();
 	}
 
-	for (; lhs > 0; --lhs) {
+	for (; rhs > 0; --rhs) {
 		bool carryP = false;
 		bool carryN = false;
 		list<unsigned long>::iterator next;
-		for (list<unsigned long>::iterator it = rhs.bits.begin(); it != rhs.bits.end(); ++it) {
+		for (list<unsigned long>::iterator it = lhs.bits.begin(); it != lhs.bits.end(); ++it) {
 			next = it;
 			++next;
 			*it >>= 1ul;
-			if (next == rhs.bits.end()) {
-				*it |= rhs.isNeg ? MSB : 0ul;
+			if (next == lhs.bits.end()) {
+				*it |= lhs.isNeg ? MSB : 0ul;
 			} else {
 				*it |= (*next & 1ul) == 1ul ? MSB : 0ul;
 			}
 		}
 	}
-	rhs.condense();
-	return rhs;
+	lhs.condense();
+	return lhs;
 }
 
 #pragma endregion
@@ -381,12 +384,12 @@ BigInt BigInt::operator-() {
 }
 
 // addition
-BigInt operator+(BigInt rhs, BigInt lhs) {
-	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
+BigInt operator+(BigInt lhs, BigInt rhs) {
 	list<unsigned long>::iterator lhsIt = lhs.bits.begin();
+	list<unsigned long>::iterator rhsIt = rhs.bits.begin();
 
-	unsigned long rhsC = 0;
 	unsigned long lhsC = 0;
+	unsigned long rhsC = 0;
 
 	BigInt temp;
 	bool carryN = false;
@@ -395,9 +398,9 @@ BigInt operator+(BigInt rhs, BigInt lhs) {
 
 	int state = 0;
 
-	while (state = (rhsIt != rhs.bits.end() ? 1 : 0) | (lhsIt != lhs.bits.end() ? 2 : 0), state != 0) {
-		rhsC = ((state & 1) == 1) ? *(rhsIt++) : (rhs.isNeg ? MAX : 0);
-		lhsC = ((state & 2) == 2) ? *(lhsIt++) : (lhs.isNeg ? MAX : 0);
+	while (state = (lhsIt != lhs.bits.end() ? 1 : 0) | (rhsIt != rhs.bits.end() ? 2 : 0), state != 0) {
+		lhsC = ((state & 1) == 1) ? *(lhsIt++) : (lhs.isNeg ? MAX : 0);
+		rhsC = ((state & 2) == 2) ? *(rhsIt++) : (rhs.isNeg ? MAX : 0);
 
 		carryP = carryN;
 		carryN = false;
@@ -405,19 +408,19 @@ BigInt operator+(BigInt rhs, BigInt lhs) {
 		unsigned long sum = 0;
 
 		// Why doesn't the addition operator let me determine if an overflow happened?
-		if ((rhsC & MSB) != (lhsC & MSB)) {
-			sum = (rhsC & ALL_BUT_MSB) + (lhsC & ALL_BUT_MSB);
+		if ((lhsC & MSB) != (rhsC & MSB)) {
+			sum = (lhsC & ALL_BUT_MSB) + (rhsC & ALL_BUT_MSB);
 			if ((sum & MSB) == MSB) {
 				sum &= ALL_BUT_MSB;
 				carryN = true;
 			} else {
 				sum |= MSB;
 			}
-		} else if ((rhsC & lhsC & MSB) == MSB) {
-			sum = (rhsC & ALL_BUT_MSB) + (lhsC & ALL_BUT_MSB);
+		} else if ((lhsC & rhsC & MSB) == MSB) {
+			sum = (lhsC & ALL_BUT_MSB) + (rhsC & ALL_BUT_MSB);
 			carryN = true;
 		} else {
-			sum = rhsC + lhsC;
+			sum = lhsC + rhsC;
 		}
 
 		if (carryP) {
@@ -431,7 +434,7 @@ BigInt operator+(BigInt rhs, BigInt lhs) {
 		temp.bits.push_back(sum);
 	}
 
-	state = (carryN ? 1 : 0) | (rhs.isNeg ? 2 : 0) | (lhs.isNeg ? 4 : 0);
+	state = (carryN ? 1 : 0) | (lhs.isNeg ? 2 : 0) | (rhs.isNeg ? 4 : 0);
 
 	switch (state) {
 		case 1:
@@ -457,27 +460,27 @@ BigInt operator+(BigInt rhs, BigInt lhs) {
 }
 
 // subtraction
-BigInt operator-(BigInt rhs, BigInt lhs) {
-	return rhs + -lhs;
+BigInt operator-(BigInt lhs, BigInt rhs) {
+	return lhs + -rhs;
 }
 
 // multiplication
-BigInt operator*(BigInt rhs, BigInt lhs) {
-	bool negate = rhs.isNeg != lhs.isNeg;
-	if (rhs.isNeg) {
-		rhs = -rhs;
-	}
+BigInt operator*(BigInt lhs, BigInt rhs) {
+	bool negate = lhs.isNeg != rhs.isNeg;
 	if (lhs.isNeg) {
 		lhs = -lhs;
+	}
+	if (rhs.isNeg) {
+		rhs = -rhs;
 	}
 
 	BigInt temp = 0ul;
 
-	for (BigInt mask = 1ul; mask <= lhs; mask <<= 1ul) {
-		if ((mask & lhs) == mask) {
-			temp += rhs;
+	for (BigInt mask = 1ul; mask <= rhs; mask <<= 1ul) {
+		if ((mask & rhs) == mask) {
+			temp += lhs;
 		}
-		rhs <<= 1ul;
+		lhs <<= 1ul;
 	}
 
 	if (negate) {
@@ -487,25 +490,25 @@ BigInt operator*(BigInt rhs, BigInt lhs) {
 }
 
 // division
-BigInt operator/(BigInt rhs, BigInt lhs) {
-	if (lhs == 0) {
+BigInt operator/(BigInt lhs, BigInt rhs) {
+	if (rhs == 0) {
 		throw exception("Division by zero!");
 	}
-	bool negate = rhs.isNeg != lhs.isNeg;
-	if (rhs.isNeg) {
-		rhs = -rhs;
-	}
+	bool negate = lhs.isNeg != rhs.isNeg;
 	if (lhs.isNeg) {
 		lhs = -lhs;
 	}
+	if (rhs.isNeg) {
+		rhs = -rhs;
+	}
 
 	BigInt quotient;
-	BigInt i = rhs.log() - lhs.log();
-	BigInt subend = lhs << i;
+	BigInt i = lhs.log() - rhs.log();
+	BigInt subend = rhs << i;
 	BigInt mask = 1ul << i;
-	while (i >= 0 && rhs >= lhs) {
-		if (rhs >= subend) {
-			rhs -= subend;
+	while (i >= 0 && lhs >= rhs) {
+		if (lhs >= subend) {
+			lhs -= subend;
 			quotient |= mask;
 		}
 		mask >>= 1ul;
@@ -519,38 +522,69 @@ BigInt operator/(BigInt rhs, BigInt lhs) {
 }
 
 // modulus
-BigInt operator%(BigInt rhs, BigInt lhs) {
-	bool rhsNeg = rhs.isNeg;
+BigInt operator%(BigInt lhs, BigInt rhs) {
 	bool lhsNeg = lhs.isNeg;
-	if (rhs.isNeg) {
-		rhs = -rhs;
-	}
+	bool rhsNeg = rhs.isNeg;
 	if (lhs.isNeg) {
 		lhs = -lhs;
 	}
-	if (rhs == 0ul || lhs <= 1ul) {
+	if (rhs.isNeg) {
+		rhs = -rhs;
+	}
+	if (lhs == 0ul || rhs <= 1ul) {
 		return 0ul;
 	}
-	BigInt i = rhs.log() - lhs.log();
-	BigInt subend = lhs << i;
-	while (i >= 0ul && rhs >= lhs) {
-		if (rhs >= subend) {
-			rhs -= subend;
+	BigInt i = lhs.log() - rhs.log();
+	BigInt subend = rhs << i;
+	while (i >= 0ul && lhs >= rhs) {
+		if (lhs >= subend) {
+			lhs -= subend;
 		}
 		subend >>= 1ul;
 		--i;
 	}
-	if (rhs != 0) {
-		if (rhsNeg) {
+	if (lhs != 0) {
+		if (lhsNeg) {
 			// Can we please make the modulus operator always return a positive number when the divisor is positive,
 			// I've never wanted (-1) % 5 == -1
-			rhs = lhs - rhs;
+			lhs = rhs - lhs;
 		}
-		if (lhsNeg) {
-			rhs -= lhs;
+		if (rhsNeg) {
+			lhs -= rhs;
 		}
 	}
-	return rhs;
+	return lhs;
+}
+
+#pragma endregion
+
+#pragma region Other operations
+
+// absolute value
+BigInt BigInt::abs() {
+	return this->isNeg ? -*this : *this;
+}
+
+// greatest common divisor
+BigInt BigInt::gcd(BigInt lhs, BigInt rhs) {
+	BigInt pL = lhs.abs();
+	BigInt pG = rhs.abs();
+	BigInt temp = pL;
+	if (pL > pG) {
+		pL = pG;
+		pG = temp;
+	}
+	while (pL > 0) {
+		temp = pL;
+		pL = pG % pL;
+		pG = temp;
+	}
+	return pG;
+}
+
+// least common multiple
+BigInt BigInt::lcm(BigInt lhs, BigInt rhs) {
+	return lhs * rhs / BigInt::gcd(lhs, rhs);
 }
 
 // floored base 2 logarithm
@@ -573,67 +607,89 @@ BigInt BigInt::log() {
 	return l;
 }
 
+// exponentiation
+BigInt BigInt::pow(BigInt base, BigInt pow) {
+	if (pow == 0) {
+		// empty product
+		return 1ul;
+	}
+	if (pow.isNeg || base == 0ul) {
+		return 0ul;
+	}
+	BigInt temp = base;
+	BigInt product = 1ul;
+	BigInt mask = 1ul;
+	while (mask <= pow) {
+		if ((pow & mask) == mask) {
+			product *= temp;
+		}
+		mask <<= 1ul;
+		temp *= temp;
+	}
+	return product;
+}
+
 #pragma endregion
 
 #pragma region Assignment operators
 
 // bitwise and assignment
-BigInt& BigInt::operator&=(BigInt lhs) {
-	*this = *this & lhs;
+BigInt& BigInt::operator&=(BigInt rhs) {
+	*this = *this & rhs;
 	return *this;
 }
 
 // bitwise or assignment
-BigInt& BigInt::operator|=(BigInt lhs) {
-	*this = *this | lhs;
+BigInt& BigInt::operator|=(BigInt rhs) {
+	*this = *this | rhs;
 	return *this;
 }
 
 // bitwise xor assignment
-BigInt& BigInt::operator^=(BigInt lhs) {
-	*this = *this ^ lhs;
+BigInt& BigInt::operator^=(BigInt rhs) {
+	*this = *this ^ rhs;
 	return *this;
 }
 
 // left bitshift assignment
-BigInt& BigInt::operator<<=(BigInt lhs) {
-	*this = *this << lhs;
+BigInt& BigInt::operator<<=(BigInt rhs) {
+	*this = *this << rhs;
 	return *this;
 }
 
 // right bitshift assignment
-BigInt& BigInt::operator>>=(BigInt lhs) {
-	*this = *this >> lhs;
+BigInt& BigInt::operator>>=(BigInt rhs) {
+	*this = *this >> rhs;
 	return *this;
 }
 
 // addition assignment
-BigInt& BigInt::operator+=(BigInt lhs) {
-	*this = *this + lhs;
+BigInt& BigInt::operator+=(BigInt rhs) {
+	*this = *this + rhs;
 	return *this;
 }
 
 // subtraction assignment
-BigInt& BigInt::operator-=(BigInt lhs) {
-	*this = *this - lhs;
+BigInt& BigInt::operator-=(BigInt rhs) {
+	*this = *this - rhs;
 	return *this;
 }
 
 // multiplication assignment
-BigInt& BigInt::operator*=(BigInt lhs) {
-	*this = *this * lhs;
+BigInt& BigInt::operator*=(BigInt rhs) {
+	*this = *this * rhs;
 	return *this;
 }
 
 // division assignment
-BigInt& BigInt::operator/=(BigInt lhs) {
-	*this = *this / lhs;
+BigInt& BigInt::operator/=(BigInt rhs) {
+	*this = *this / rhs;
 	return *this;
 }
 
 // modulus assignment
-BigInt& BigInt::operator%=(BigInt lhs) {
-	*this = *this % lhs;
+BigInt& BigInt::operator%=(BigInt rhs) {
+	*this = *this % rhs;
 	return *this;
 }
 
@@ -642,44 +698,44 @@ BigInt& BigInt::operator%=(BigInt lhs) {
 #pragma region Comparisons
 
 // Equality
-bool operator==(BigInt rhs, BigInt lhs) {
-	// if rhs == lhs, then rhs ^ lhs == 0
-	rhs ^= lhs;
-	if (rhs.isNeg) {
+bool operator==(BigInt lhs, BigInt rhs) {
+	// if lhs == rhs, then lhs ^ rhs == 0
+	lhs ^= rhs;
+	if (lhs.isNeg) {
 		return false;
 	}
-	list<unsigned long>::iterator it = rhs.bits.begin();
+	list<unsigned long>::iterator it = lhs.bits.begin();
 	// condense() makes "0" zero elements long
-	return it == rhs.bits.end();
+	return it == lhs.bits.end();
 }
 
 // Inequality
-bool operator!=(BigInt rhs, BigInt lhs) {
-	return !(lhs == rhs);
+bool operator!=(BigInt lhs, BigInt rhs) {
+	return !(rhs == lhs);
 }
 
 // Less than
-bool operator< (BigInt rhs, BigInt lhs) {
+bool operator< (BigInt lhs, BigInt rhs) {
 	// a non-negative number is never less than a negative number
-	if (!rhs.isNeg && lhs.isNeg) {
+	if (!lhs.isNeg && rhs.isNeg) {
 		return false;
 	}
-	return (rhs - lhs).isNeg;
+	return (lhs - rhs).isNeg;
 }
 
 // Greater than
-bool operator>(BigInt rhs, BigInt lhs) {
-	return lhs < rhs;
+bool operator>(BigInt lhs, BigInt rhs) {
+	return rhs < lhs;
 }
 
 // Less than or equal to
-bool operator<=(BigInt rhs, BigInt lhs) {
-	return !(lhs < rhs);
+bool operator<=(BigInt lhs, BigInt rhs) {
+	return !(rhs < lhs);
 }
 
 // Greater than or equal to
-bool operator>=(BigInt rhs, BigInt lhs) {
-	return !(rhs < lhs);
+bool operator>=(BigInt lhs, BigInt rhs) {
+	return !(lhs < rhs);
 }
 
 #pragma endregion
