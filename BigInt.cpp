@@ -2,6 +2,7 @@
 #include "BigInt.h"
 #include <list>
 #include <string>
+#include <stdexcept>
 
 const unsigned long MAX = ~0ul;
 const unsigned long ALL_BUT_MSB = MAX >> 1;
@@ -100,7 +101,7 @@ string BigInt::toHex() const {
 
 string BigInt::toString(int base) const {
 	if (!(base >= 2 && base <= 36)) {
-		throw exception("Base is outside the range [2,36]");
+		throw range_error("Base is outside the range [2,36]");
 	}
 	if (*this == 0) {
 		return "0";
@@ -473,6 +474,8 @@ BigInt operator*(BigInt lhs, BigInt rhs) {
 	if (rhs.isNeg) {
 		rhs = -rhs;
 	}
+
+	// TODO: maybe implement karatsuba multiplication?
 
 	BigInt temp = 0ul;
 

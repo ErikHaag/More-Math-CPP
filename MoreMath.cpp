@@ -1,9 +1,10 @@
 #include "BigInt.h"
+#include "Rational.h"
 #include <iostream>
 
 int main() {
-	BigInt a = -5l;
-	BigInt b = 3ul;
-	cout << BigInt::pow(a, b).toString();
+	Rational a = Rational(1ul, 0ul);
+	a.simplify();
+	cout << a.toFraction();
 	return 0;
 }
