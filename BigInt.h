@@ -35,11 +35,11 @@ public:
 	BigInt(unsigned long long integer);
 
 	BigInt operator~ ();
-	friend BigInt operator&(BigInt rhs, BigInt lhs);
-	friend BigInt operator|(BigInt rhs, BigInt lhs);
-	friend BigInt operator^(BigInt rhs, BigInt lhs);
-	friend BigInt operator<<(BigInt rhs, BigInt lhs);
-	friend BigInt operator>>(BigInt rhs, BigInt lhs);
+	friend BigInt operator&(BigInt lhs, BigInt rhs);
+	friend BigInt operator|(BigInt lhs, BigInt rhs);
+	friend BigInt operator^(BigInt lhs, BigInt rhs);
+	friend BigInt operator<<(BigInt lhs, BigInt rhs);
+	friend BigInt operator>>(BigInt lhs, BigInt rhs);
 
 	BigInt& operator++();
 	BigInt operator++(int);
@@ -48,11 +48,11 @@ public:
 
 
 	BigInt operator-();
-	friend BigInt operator+(BigInt rhs, BigInt lhs);
-	friend BigInt operator-(BigInt rhs, BigInt lhs);
-	friend BigInt operator*(BigInt rhs, BigInt lhs);
-	friend BigInt operator/(BigInt rhs, BigInt lhs);
-	friend BigInt operator%(BigInt rhs, BigInt lhs);
+	friend BigInt operator+(BigInt lhs, BigInt rhs);
+	friend BigInt operator-(BigInt lhs, BigInt rhs);
+	friend BigInt operator*(BigInt lhs, BigInt rhs);
+	friend BigInt operator/(BigInt lhs, BigInt rhs);
+	friend BigInt operator%(BigInt lhs, BigInt rhs);
 
 	BigInt abs();
 	static BigInt gcd(BigInt lhs, BigInt rhs);
@@ -60,22 +60,22 @@ public:
 	BigInt log();
 	static BigInt pow(BigInt base, BigInt power);
 
-	BigInt& operator&=(BigInt lhs);
-	BigInt& operator|=(BigInt lhs);
-	BigInt& operator^=(BigInt lhs);
-	BigInt& operator<<=(BigInt lhs);
-	BigInt& operator>>=(BigInt lhs);
-	BigInt& operator+=(BigInt lhs);
-	BigInt& operator-=(BigInt lhs);
-	BigInt& operator*=(BigInt lhs);
-	BigInt& operator/=(BigInt lhs);
-	BigInt& operator%=(BigInt lhs);
+	BigInt& operator&=(BigInt rhs);
+	BigInt& operator|=(BigInt rhs);
+	BigInt& operator^=(BigInt rhs);
+	BigInt& operator<<=(BigInt rhs);
+	BigInt& operator>>=(BigInt rhs);
+	BigInt& operator+=(BigInt rhs);
+	BigInt& operator-=(BigInt rhs);
+	BigInt& operator*=(BigInt rhs);
+	BigInt& operator/=(BigInt rhs);
+	BigInt& operator%=(BigInt rhs);
 
-	friend bool operator==(BigInt rhs, BigInt lhs);
-	friend bool operator!=(BigInt rhs, BigInt lhs);
-	friend bool operator<(BigInt rhs, BigInt lhs);
-	friend bool operator>(BigInt rhs, BigInt lhs);
-	friend bool operator<=(BigInt rhs, BigInt lhs);
-	friend bool operator>=(BigInt rhs, BigInt lhs);
+	friend bool operator==(BigInt lhs, BigInt rhs);
+	friend bool operator!=(BigInt lhs, BigInt rhs);
+	friend bool operator<(BigInt lhs, BigInt rhs);
+	friend bool operator>(BigInt lhs, BigInt rhs);
+	friend bool operator<=(BigInt lhs, BigInt rhs);
+	friend bool operator>=(BigInt lhs, BigInt rhs);
 
 };

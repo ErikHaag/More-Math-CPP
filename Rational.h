@@ -1,5 +1,6 @@
 #pragma once
 #include "BigInt.h"
+
 class Rational {
 private:
 	BigInt numerator = 0ul;
@@ -21,5 +22,26 @@ public:
 	friend Rational operator/(Rational lhs, Rational rhs);
 	friend Rational operator%(Rational lhs, Rational rhs);
 
+	Rational ceiling();
+	Rational floor();
+	Rational truncate();
+
+	bool isInfinite();
+	bool isInteger();
+	bool isNegative();
+	bool isZero();
+
+	Rational& operator+=(Rational rhs);
+	Rational& operator-=(Rational rhs);
+	Rational& operator*=(Rational rhs);
+	Rational& operator/=(Rational rhs);
+	Rational& operator%=(Rational rhs);
+
+	friend bool operator==(Rational lhs, Rational rhs);
+	friend bool operator!=(Rational lhs, Rational rhs);
+	friend bool operator<(Rational lhs, Rational rhs);
+	friend bool operator>(Rational lhs, Rational rhs);
+	friend bool operator<=(Rational lhs, Rational rhs);
+	friend bool operator>=(Rational lhs, Rational rhs);
 };
 
