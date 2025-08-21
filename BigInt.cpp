@@ -570,19 +570,19 @@ BigInt BigInt::abs() {
 
 // greatest common divisor
 BigInt BigInt::gcd(BigInt lhs, BigInt rhs) {
-	BigInt pL = lhs.abs();
-	BigInt pG = rhs.abs();
-	BigInt temp = pL;
-	if (pL > pG) {
-		pL = pG;
-		pG = temp;
+	BigInt L = lhs.abs();
+	BigInt G = rhs.abs();
+	BigInt temp = L;
+	if (L > G) {
+		L = G;
+		G = temp;
 	}
-	while (pL > 0) {
-		temp = pL;
-		pL = pG % pL;
-		pG = temp;
+	while (L != 0) {
+		temp = L;
+		L = G % L;
+		G = temp;
 	}
-	return pG;
+	return G;
 }
 
 // least common multiple
@@ -720,8 +720,8 @@ bool operator!=(BigInt lhs, BigInt rhs) {
 // Less than
 bool operator< (BigInt lhs, BigInt rhs) {
 	// a non-negative number is never less than a negative number
-	if (!lhs.isNeg && rhs.isNeg) {
-		return false;
+	if (lhs.isNeg != rhs.isNeg) {
+		return lhs.isNeg;
 	}
 	return (lhs - rhs).isNeg;
 }

@@ -22,14 +22,12 @@ public:
 	friend Rational operator/(Rational lhs, Rational rhs);
 	friend Rational operator%(Rational lhs, Rational rhs);
 
+	Rational abs();
 	Rational ceiling();
 	Rational floor();
+	static Rational gcd(Rational lhs, Rational rhs);
+	static Rational lcm(Rational lhs, Rational rhs);
 	Rational truncate();
-
-	bool isInfinite();
-	bool isInteger();
-	bool isNegative();
-	bool isZero();
 
 	Rational& operator+=(Rational rhs);
 	Rational& operator-=(Rational rhs);
@@ -37,6 +35,10 @@ public:
 	Rational& operator/=(Rational rhs);
 	Rational& operator%=(Rational rhs);
 
+	bool isInfinite();
+	bool isInteger();
+	bool isNegative();
+	bool isZero();
 	friend bool operator==(Rational lhs, Rational rhs);
 	friend bool operator!=(Rational lhs, Rational rhs);
 	friend bool operator<(Rational lhs, Rational rhs);

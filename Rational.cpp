@@ -110,6 +110,14 @@ Rational operator%(Rational lhs, Rational rhs) {
 	return lhs;
 }
 
+#pragma endregion
+
+#pragma region Other operations
+
+Rational Rational::abs() {
+	return this->isNegative() ? -*this : *this;
+}
+
 Rational Rational::ceiling() {
 	if (this->isInfinite()) {
 		return *this;
@@ -125,6 +133,26 @@ Rational Rational::floor() {
 	return Rational(this->numerator / this->denominator);
 }
 
+Rational Rational::gcd(Rational lhs, Rational rhs) {
+	Rational L = lhs.abs();
+	Rational G = rhs.abs();
+	Rational temp = L;
+	if (L > G) {
+		L = G;
+		G = temp;
+	}
+	while (!L.isZero()) {
+		temp = L;
+		L = G % L;
+		G = temp;
+	}
+	return G;
+}
+
+Rational Rational::lcm(Rational lhs, Rational rhs) {
+	return lhs * rhs / Rational::gcd(lhs, rhs);
+}
+
 Rational Rational::truncate() {
 	if (this->isNegative()) {
 		return this->ceiling();
@@ -136,14 +164,34 @@ Rational Rational::truncate() {
 
 #pragma region Assignment operators
 
-Rational& Rational::operator+=(Rational lhs) {
-	*this = *this + lhs;
+Rational& Rational::operator+=(Rational rhs) {
+	*this = *this + rhs;
+	return *this;
+}
+
+Rational& Rational::operator-=(Rational rhs) {
+	*this = *this - rhs;
+	return *this;
+}
+
+Rational& Rational::operator*=(Rational rhs) {
+	*this = *this * rhs;
+	return *this;
+}
+
+Rational& Rational::operator/=(Rational rhs) {
+	*this = *this / rhs;
+	return *this;
+}
+
+Rational& Rational::operator%=(Rational rhs) {
+	*this = *this % rhs;
+	return *this;
 }
 
 #pragma endregion
 
 #pragma region Comparisons
-
 
 bool Rational::isInfinite() {
 	return this->denominator == 0;
@@ -160,5 +208,39 @@ bool Rational::isNegative() {
 bool Rational::isZero() {
 	return this->numerator == 0;
 }
+
+bool operator==(Rational lhs, Rational rhs) {
+	return lhs.numerator == rhs.numerator && lhs.denominator == rhs.denominator;
+}
+
+bool operator!=(Rational lhs, Rational rhs) {
+	return !(lhs == rhs);
+}
+
+bool operator<(Rational lhs, Rational rhs) {
+	if (lhs.isNegative() != rhs.isNegative()) {
+		return lhs.isNegative();
+	}
+	if (lhs.isInfinite()) {
+		return lhs.isNegative() && !rhs.isInfinite();
+	}
+	if (rhs.isInfinite()) {
+		return !rhs.isNegative();
+	}
+	return (lhs - rhs).isNegative();
+}
+
+bool operator>(Rational lhs, Rational rhs) {
+	return rhs < lhs;
+}
+
+bool operator<=(Rational lhs, Rational rhs) {
+	return !(rhs < lhs);
+}
+
+bool operator>=(Rational lhs, Rational rhs) {
+	return !(lhs < rhs);
+}
+
 
 #pragma endregion
